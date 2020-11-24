@@ -143,25 +143,7 @@
                             this.view = "detailview";
                         });
                 },
-                onFileChanged: function (event) {
-                    this.selectedFile = event.target.files[0];
-                    console.log(this.selectedFile);
-                },
-                onUpload: function () {
-                    this.pleaseWait = true;
-                    var formData = new FormData()
-                    formData.append('myFile', this.selectedFile, this.selectedFile.name);
-                    axios.post(this.baseUrl + "/api/students/" + this.detailItem.id + "/uploadphoto", formData)
-                        .then(response => {
-                            this.detailItem = response.data;
-                            this.selectedFile = null;
-                            this.pleaseWait = false;
-                        })
-                        .catch(error => {
-                            alert('Photo upload failed.')
-                            this.selectedFile = null;
-                            this.pleaseWait = false;
-                        });
+              
                 }
             },
             mounted: function () {
