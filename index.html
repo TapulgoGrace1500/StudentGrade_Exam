@@ -1,0 +1,175 @@
+<html>
+<head>
+    <title>Hello, VueJS!</title>
+    <style>
+        table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+
+    </style>    
+</head>
+<body>
+    
+    <div id="studentGradeApp">
+        <h1>{{appName}}</h1>
+        
+        
+        <form action="action_page.php">
+            Enter Student Id
+            <input type="text" v-model="searchKeyword">
+            <button @click="searchStudents">Search</button>
+            <br> <br>
+
+            <div>
+            <table>
+                <thead>
+                    <tr>
+                        <th v-for="column in columnHeader">
+                            {{column}}
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="(student,index) in students">
+                        <td>{{student.id}}</td>
+                        <td><a href="#" @click="getStudents(index)">{{student.firstName}} {{student.lastName}}</a></td>
+                        <td>{{student.gender}}</td>
+                        <td>{{student.civilStatus}}</td>
+                        <td>{{student.schoolLastAttended}}</td>
+                        <td>{{student.course}}</td>
+            </div>        
+
+            <div v-show="view === 'detailview'">
+                <h2>Details</h2>
+                <!-- <button @click="display('tablelist')">Back</button> -->
+                <dl>
+                    <dt>Id</dt>
+                    <dd>{{detailItem.id}}</dd>
+                    <dt>Last Name</dt>
+                    <dd>{{detailItem.lastName}}</dd>
+                    <dt>First Name</dt>
+                    <dd>{{detailItem.firstName}}</dd>
+                    <dt>Gender</dt>
+                    <dd>{{detailItem.gender}}</dd>
+                    <dt>Civil Status</dt>
+                    <dd>{{detailItem.civilStatus}}</dd>
+                    <dt>School Last Attended</dt>
+                    <dd>{{detailItem.schoolLastAttended}}</dd>
+                    <dt>Course</dt>
+                    <dd>{{detailItem.course}}</dd>
+                </dl>
+            </div>
+                    
+
+    <!-- Vue JS and Axios -->
+    <script src="js/vue.js"></script>
+    <script src="js/axios.min.js"></script>
+    <script>
+
+        var contactApp = new Vue({
+            el: '#studentGradeApp',
+            data: {
+                appName: "Student Grade Webapp",
+                columnHeader: ['Id', 'Name', 'Gender', 'Civil Status', 'School Last Attended', 'Course'],
+                baseUrl: "gracelletapulgo15.somee.com",
+                students: [],                
+                searchKeyword: "",
+                newItem: {},
+                view: "tablelist",
+                editItem: {},
+                detailItem: {},
+                selectedFile: null,
+                pleaseWait: false         
+            },
+            methods: {
+                getStudents: function () {
+                    axios.get(this.baseUrl + "/api/students")
+                        .then(response => {
+                            this.students = response.data;
+                        });
+                },
+                searchStudents: function () {
+                    if (this.searchKeyword !== '') {
+                        axios.get(this.baseUrl + "/api/students?keyword=" + this.searchKeyword)
+                            .then(response => {
+                                this.students = response.data;
+                            });
+                    }
+                    else {
+                        this.getStudents();
+                    }     
+                },                 
+                postStudents: function () {
+                    axios.post(this.baseUrl + "/api/students", this.newItem)
+                        .then(response => {
+                            this.getStudents();
+                            this.newItem = {};
+                        });
+                },
+                deleteStudents: function (index) {
+                    var yes = confirm('Are you sure?');
+                    if (yes) {
+                        axios.delete(this.baseUrl + "/api/students/" + this.students[index].id)
+                            .then(response => {
+                                this.getStudents();
+                            });
+                    }
+                },
+                display: function (v) {
+                    this.view = v;
+                },
+                editStudents: function (index) {
+                    axios.get(this.baseUrl + "/api/students/" + this.students[index].id)
+                        .then(response => {
+                            this.editItem = response.data;
+                            this.view = 'editform';
+                        });
+                },
+                updateStudents: function () {
+                    axios.put(this.baseUrl + "/api/students", this.editItem)
+                        .then(response => {
+                            this.getStudents();
+                            this.view = "tablelist";
+                            this.editItem = {};
+                        });
+                },     
+                getStudents: function (index) {
+                    this.detailItem = this.students[index];
+                    axios.get(this.baseUrl + "/api/students/" + this.detailItem.id)
+                        .then(response => {
+                            this.detailItem = response.data;
+                            //this.customers[index] = response.data;
+                            this.view = "detailview";
+                        });
+                },
+                onFileChanged: function (event) {
+                    this.selectedFile = event.target.files[0];
+                    console.log(this.selectedFile);
+                },
+                onUpload: function () {
+                    this.pleaseWait = true;
+                    var formData = new FormData()
+                    formData.append('myFile', this.selectedFile, this.selectedFile.name);
+                    axios.post(this.baseUrl + "/api/students/" + this.detailItem.id + "/uploadphoto", formData)
+                        .then(response => {
+                            this.detailItem = response.data;
+                            this.selectedFile = null;
+                            this.pleaseWait = false;
+                        })
+                        .catch(error => {
+                            alert('Photo upload failed.')
+                            this.selectedFile = null;
+                            this.pleaseWait = false;
+                        });
+                }
+            },
+            mounted: function () {
+                this.getStudents();
+            }
+        });
+
+    </script>
+
+</body>
+</html>
